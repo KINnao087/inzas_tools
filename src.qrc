@@ -1,0 +1,28 @@
+<RCC>
+    <qresource prefix="/">
+        <file>resources/qml/DownloadMission.qml</file>
+        <file>resources/qml/MyProgressBar.qml</file>
+        <file>resources/qml/MainWindow.qml</file>
+        <file>resources/qml/TitleBar.qml</file>
+        <file>resources/qml/ImgButton.qml</file>
+
+        <file>resources/img/more.png</file>
+        <file>resources/img/morePress.png</file>
+        <file>resources/img/moreHover.png</file>
+        <file>resources/img/addHover.png</file>
+        <file>resources/img/addPress.png</file>
+        <file>resources/img/add.png</file>
+        <file>resources/img/lain.png</file>
+        <file>resources/img/robot_icon.png</file>
+        <file>resources/img/robot_icon_hover.png</file>
+        <file>resources/img/robot_icon_press.png</file>
+
+
+        <file>resources/qml/PageMore.qml</file>
+        <file>resources/qml/PageAdd.qml</file>
+        <file>resources/qml/PageSettings.qml</file>
+        <file>resources/qml/LeftBar.qml</file>
+        <file>resources/qml/InputText.qml</file>
+        <file>resources/qml/AgentPage.qml</file>
+    </qresource>
+</RCC>
