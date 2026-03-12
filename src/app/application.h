@@ -5,6 +5,7 @@
 #include <qtmetamacros.h>
 #include <qtypes.h>
 #include <vector>
+#include <QThread>
 
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
@@ -23,8 +24,10 @@ class Application : public QObject
     QQmlApplicationEngine engine_;          // app 和 engine 是一对多
     std::vector<QQuickWindow*> windows_;  //保存了创建的窗口
     std::unique_ptr<DownloadController> controller_;
-    std::unique_ptr<AgentBackend> agent_backend_;
-    
+
+    AgentBackend* agent_backend_;
+    QThread* agent_thread_;
+
     void addWindowShadow();
 
     void bindSlotsAndSignals(QObject*);                  // 绑定信号和槽
@@ -48,6 +51,7 @@ public slots:
     void handleAgentMessageIn(const QString& msg);
 signals:
     void downloadCreated(QObject* viewModel, const QString& name, const QString& url, const QString& path);
+    void agentMessageIn(const QString& msg);
     void agentMessageReady(const QString& msg);
 };
 

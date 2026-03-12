@@ -22,12 +22,27 @@
 //     void onMessageReceived(QByteArray message);
 // };
 
-AgentBackend::AgentBackend(const QString& ip, short port) : socket_(new QTcpSocket())
+AgentBackend::AgentBackend(const QString& ip, quint16 port, QObject *parent) : ip_(ip), port_(port), QObject(parent)
 {
-    socket_->connectToHost(ip, port);
 }
 
-void AgentBackend::onAgentMessageIn(const QString& msg)
+AgentBackend::~AgentBackend()
+{
+}
+
+void AgentBackend::start()
+{
+    qDebug() << "AgentBackend::start";
+    socket_ = new QTcpSocket(this);
+
+    connect(socket_, &QTcpSocket::connected, this, &AgentBackend::onConnected);
+    connect(socket_, &QTcpSocket::readyRead, this, &AgentBackend::onReadyRead);
+    connect(socket_, &QAbstractSocket::errorOccurred, this, &AgentBackend::onSocketError);
+
+    socket_->connectToHost(ip_, port_);
+}
+
+void AgentBackend::sendMessage(const QString& msg)
 {
     qDebug() << "received message:" << msg;
     //TODO: 将信息发送给agent
@@ -44,19 +59,24 @@ void AgentBackend::onAgentMessageIn(const QString& msg)
     socket_->write(payload);
 }
 
-QString AgentBackend::onAgentMessageOut()
+void AgentBackend::onConnected()
 {
-    //TODO: 从agent获取信息
-    if (!socket_->waitForReadyRead(60000)) {
-        qDebug() << "read timeout:" << socket_->errorString();
-        return QString();
+    qDebug() << "Agent connected:" << ip_ << port_;
+}
+
+void AgentBackend::onReadyRead()
+{
+    buffer_.append(socket_->readAll());
+
+    const QList<QByteArray> messages = buffer_.takeMessages();
+    for (const QByteArray& message : messages) {
+        emit messageReady(jsonValueByKey(QString::fromUtf8(message), "reply"));
     }
+}
 
-    QString received = socket_->readAll();
+void AgentBackend::onSocketError(QAbstractSocket::SocketError)
+{
+    qDebug() << "socketError:" << socket_->errorString();
 
-    qDebug() << "received message:" << received;
-
-    return QString(jsonValueByKey(received, "reply"));
-    // qDebug() << "send message:" << msg;
-
+    emit errorOccurred(socket_->errorString());
 }

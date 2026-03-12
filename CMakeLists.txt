@@ -26,6 +26,8 @@ add_executable(${PROJECT_NAME}
         src/core/AgentBackend.h
         src/util/json_tools.cpp
         src/util/json_tools.h
+        src/util/Buffer.cpp
+        src/util/Buffer.h
 )
 
 target_link_libraries(

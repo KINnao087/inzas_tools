@@ -50,9 +50,26 @@ Application::Application(int argc, char* argv[])
     ctl->setOnFinished(std::bind(&Application::handleDownloadFinish, this));
     ctl->setOnProgress(std::bind(&Application::handleDownloadProgress, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
     ctl->setOnStart(std::bind(&Application::handleDownloadStart, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
+
+    agent_thread_ = new QThread(this);
+    agent_backend_->moveToThread(agent_thread_);
+
+    connect(agent_thread_, &QThread::started, agent_backend_, &AgentBackend::start);
+    connect(this, &Application::agentMessageIn, agent_backend_, &AgentBackend::sendMessage,Qt::QueuedConnection);
+    connect(agent_backend_, &AgentBackend::messageReady, this, &Application::agentMessageReady);
+    connect(agent_backend_, &AgentBackend::errorOccurred, this, [](const QString& err) {
+        qWarning() << "agent error:" << err;
+    });
+    connect(agent_thread_, &QThread::finished, agent_backend_, &QObject::deleteLater);
+
+    agent_thread_->start();
 }
 
 Application::~Application() {
+    if (agent_thread_) {
+        agent_thread_->quit();
+        agent_thread_->wait();
+    }
 }
 
 void Application::createOneWindow() {
@@ -82,8 +99,6 @@ void Application::bindSlotsAndSignals(QObject* root)
         this,
         SLOT(handleAgentMessageIn(const QString&))
     );
-
-
 }
 
 void Application::run() {
@@ -104,7 +119,6 @@ void Application::run() {
     QObject *root = windows_[0];
     bindSlotsAndSignals(root);
     
-
     app_.exec();
 }
 
@@ -134,12 +148,14 @@ void Application::handleDownloadError(const QString& errStr) {
 
 void Application::handleAgentMessageIn(const QString& msg)
 {
-    qDebug() << "Application: message: " << msg;
-    agent_backend_->onAgentMessageIn(msg);
+    emit agentMessageIn(msg);
 
-    qDebug() << "Application: send message: " << msg;
-
-    QString outMsg = agent_backend_->onAgentMessageOut();
-    qDebug() << "Application: receive message: " << outMsg;
-    emit agentMessageReady(outMsg);
+    // qDebug() << "Application: message: " << msg;
+    // agent_backend_->sendMessage(msg);
+    //
+    // qDebug() << "Application: send message: " << msg;
+    //
+    // QString outMsg = agent_backend_->onAgentMessageOut();
+    // qDebug() << "Application: receive message: " << outMsg;
+    // emit agentMessageReady(outMsg);
 }

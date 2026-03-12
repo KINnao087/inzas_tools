@@ -9,15 +9,34 @@
 
 #include <QString>
 #include <QTcpSocket>
+#include <QObject>
 
-class AgentBackend
+#include "Buffer.h"
+
+class AgentBackend : public QObject
 {
-    std::unique_ptr<QTcpSocket> socket_;
-
+    Q_OBJECT
+    QString ip_;
+    quint16 port_;
+    QTcpSocket* socket_ = nullptr;
+    Buffer buffer_;
 public:
-    explicit AgentBackend(const QString& ip = "127.0.0.1", short port = 5050);
-    void onAgentMessageIn(const QString& msgIn);    // 将在这里将消息发送给PythonAgent
-    QString onAgentMessageOut();
+    explicit AgentBackend(const QString& ip = "127.0.0.1", quint16 port = 5050, QObject *parent = nullptr);
+    ~AgentBackend();
+
+public slots:
+    void start();
+    void sendMessage(const QString& msgIn);    // 将在这里将消息发送给PythonAgent
+
+signals:
+    void messageReady(const QString& msg);
+    void errorOccurred(const QString& err);
+
+private slots:
+    void onConnected();
+    void onReadyRead();
+    void onSocketError(QAbstractSocket::SocketError);
+
 };
 
 
